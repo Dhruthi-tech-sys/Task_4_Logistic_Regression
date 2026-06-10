@@ -1,0 +1,139 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+
+from sklearn.metrics import (
+    confusion_matrix,
+    classification_report,
+    roc_curve,
+    roc_auc_score,
+    ConfusionMatrixDisplay
+)
+
+# Load Dataset
+df = pd.read_csv("/workspaces/Task_4_Logistic_Regression/archive (3).zip")
+
+print("First 5 Rows")
+print(df.head())
+
+print("\nDataset Shape:")
+print(df.shape)
+
+# Drop unnecessary column if present
+if 'id' in df.columns:
+    df.drop('id', axis=1, inplace=True)
+
+if 'Unnamed: 32' in df.columns:
+    df.drop('Unnamed: 32', axis=1, inplace=True)
+
+# Convert diagnosis column
+# M = Malignant -> 1
+# B = Benign -> 0
+
+df['diagnosis'] = df['diagnosis'].map({
+    'M': 1,
+    'B': 0
+})
+
+# Features and Target
+X = df.drop('diagnosis', axis=1)
+y = df['diagnosis']
+
+# Train Test Split
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42
+)
+
+# Standardization
+scaler = StandardScaler()
+
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Logistic Regression Model
+model = LogisticRegression(max_iter=1000)
+
+model.fit(X_train, y_train)
+
+# Predictions
+y_pred = model.predict(X_test)
+
+# Confusion Matrix
+cm = confusion_matrix(y_test, y_pred)
+
+print("\nConfusion Matrix")
+print(cm)
+
+disp = ConfusionMatrixDisplay(
+    confusion_matrix=cm
+)
+
+disp.plot()
+plt.title("Confusion Matrix")
+plt.show()
+
+# Classification Report
+print("\nClassification Report")
+print(classification_report(y_test, y_pred))
+
+# ROC-AUC
+y_prob = model.predict_proba(X_test)[:, 1]
+
+fpr, tpr, threshold = roc_curve(
+    y_test,
+    y_prob
+)
+
+auc_score = roc_auc_score(
+    y_test,
+    y_prob
+)
+
+print("\nROC AUC Score:", auc_score)
+
+plt.figure(figsize=(8,6))
+
+plt.plot(
+    fpr,
+    tpr,
+    label=f"AUC = {auc_score:.3f}"
+)
+
+plt.plot(
+    [0,1],
+    [0,1],
+    linestyle="--"
+)
+
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.title("ROC Curve")
+plt.legend()
+
+plt.show()
+
+# Sigmoid Function
+x = np.linspace(-10,10,100)
+
+sigmoid = 1/(1+np.exp(-x))
+
+plt.figure(figsize=(8,6))
+
+plt.plot(x, sigmoid)
+
+plt.title("Sigmoid Function")
+plt.xlabel("x")
+plt.ylabel("Probability")
+
+plt.grid(True)
+
+plt.show()
+
+print("\nTask Completed Successfully!")
